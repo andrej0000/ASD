@@ -2,26 +2,28 @@
 //as320426
 //ASD zadanie POD
 
-long long solution(long long * A, int N, int M){
-	long long prefSum[N+1];
+unsigned long long solution(unsigned long long * A, int N, int M){
+	unsigned long long prefSum[N+1];
 	prefSum[0]=0;
 	int i = 0;
 	for (i = 0; i < N; i++){
-		prefSum[i+1] = prefSum[i] + (A[i]%M);
+		prefSum[i+1] = prefSum[i] + A[i];
 		prefSum[i+1] = prefSum[i+1] % M;
 	}
-	long long countTable[M];
+	unsigned long long countTable[M];
 	for (i = 0; i < M; i++){
 		countTable[i] = 0;
 	}
+	unsigned long long result = 1;
 	for (i = 0; i < N+1; i++){
+		result += countTable[prefSum[i]];
 		countTable[prefSum[i]]++;
 	}
 
-	long long result = 1;
-	for (i = 0; i < M; i++){
-		result += (countTable[i]*(countTable[i]-1))/2;
-	}
+//	unsigned long long result = 1;
+//	for (i = 0; i < M; i++){
+//		result += (countTable[i]*(countTable[i]-1))/2;
+//	}
 	return result;
 }
 
@@ -30,14 +32,14 @@ int main(){
 	int M = 0;
 	scanf ("%i %i", &N, &M);
 	int i = 0;
-	long long A[N];
+	unsigned long long A[N];
 	for (i = 0; i < N; i++){
 		int a;
-		scanf("%i", &a);
+		scanf("%u", &a);
 		A[i] = a;
 	}
 	
-	long long result = solution(&A[0], N, M);
-	printf("%i", result);
+	unsigned long long result = solution(&A[0], N, M);
+	printf("%u", result);
 	return 0;
 }
