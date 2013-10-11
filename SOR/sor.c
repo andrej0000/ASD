@@ -1,3 +1,6 @@
+//Andrzej Sulecki
+//as320426
+//ASD zadanie SOR
 #define MOD_CONST 1000000000
 
 //side == 0, znaczy ze ostatni element dostawiony byl z lewej
