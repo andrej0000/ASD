@@ -10,7 +10,7 @@ unsigned long long solution(unsigned long long * A, int N, int M){
 	int i = 0;
 	for (i = 0; i < N; i++){
 		prefSum[i+1] = prefSum[i] + A[i];
-		prefSum[i+1] = prefSum[i+1] % (unsigned long long)M;
+		prefSum[i+1] = prefSum[i+1] % M;
 	}
 	unsigned long long countTable[M];
 	for (i = 0; i < M; i++){
@@ -37,11 +37,11 @@ int main(){
 	unsigned long long A[N];
 	for (i = 0; i < N; i++){
 		int a;
-		scanf("%u", &a);
+		scanf("%i", &a);
 		A[i] = a;
 	}
 	
 	unsigned long long result = solution(&A[0], N, M);
-	printf("%u", result);
+	printf("%llu", result);
 	return 0;
 }
