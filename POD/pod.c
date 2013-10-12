@@ -2,13 +2,15 @@
 //as320426
 //ASD zadanie POD
 
+#include <stdio.h>
+
 unsigned long long solution(unsigned long long * A, int N, int M){
 	unsigned long long prefSum[N+1];
 	prefSum[0]=0;
 	int i = 0;
 	for (i = 0; i < N; i++){
 		prefSum[i+1] = prefSum[i] + A[i];
-		prefSum[i+1] = prefSum[i+1] % M;
+		prefSum[i+1] = prefSum[i+1] % (unsigned long long)M;
 	}
 	unsigned long long countTable[M];
 	for (i = 0; i < M; i++){

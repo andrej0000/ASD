@@ -51,9 +51,13 @@ int main(){
 		scanf("%i", &t);
 		A[i] = t;
 	}
+	if (N == 1){
+		printf("1\n");
+		return 0;
+	}
 	int j;
 	RemArr = malloc(sizeof(long**) * N);
-	
+		
 	for (i = 0; i < N; i++){
 		RemArr[i] = malloc(sizeof(long*) * N);
 		for (j = 0; j < N; j++){
@@ -64,6 +68,15 @@ int main(){
 	long result = 0;
 	result += unsort(A, 0, N-1, 0) % MOD_CONST;
 	result += unsort(A, 0, N-1, 1) % MOD_CONST;
+	result = result % MOD_CONST;	
+	for (i = 0; i < N; i++){
+		for (j = 0; j < N; j++){
+			free(RemArr[i][j]);
+		}
+		free(RemArr[i]);
+	}
+	free(RemArr);
+
 	printf("%i\n", result);
 	return 0;
 }
