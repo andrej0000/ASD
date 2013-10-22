@@ -1,35 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+//najmniejszy wiekszy 
+int lowerbound(int * A, int x, int s, int e){
+	if (s == e)
+		return s;
+	int mid = ((s+e)-((s+e)%2))/2;
+	if (A[mid] > x)
+		return lowerbound(A, x, s, mid);
+	else
+		return lowerbound(A, x, mid+1, e);
+}
+
+
 int solve(int * A, int N){
-	int ** layers;
-	layers = malloc(sizeof(int *) * N);
+	int * layers;
+	layers = malloc(sizeof(int) * N);
 	int i = 0;
 	for (i = 0; i < N; i++)
-		layers[i] = NULL;
+		layers[i] = N+1;
 	int layers_count = 0;
 	for (i = 0; i < N; i++){
 		int a = A[i];
-		int j = 0;
-		while ((layers_count > j) && (layers[j][layers[j][0]] < a)){
-			j++;
-		}
-		if (layers[j] == NULL){
-			layers[j] = malloc(sizeof(int *) * (N + 1 - i));
-			layers[j][0] = 0;
+		int j = lowerbound(layers, a, 0, N-1);
+		if (layers[j] == N+1){
 			layers_count++;
 		}
-		layers[j][0] += 1;
-		layers[j][layers[j][0]] = a;
-	}
-	
-	for (i = 0; i < N; i++){
-		free(layers[i]);
+		layers[j] = a;
 	}
 	free(layers);
-
 	return N-layers_count;
-
 }
 
 int main(){
@@ -43,7 +44,6 @@ int main(){
 		A[i] = a;
 	}
 	int result = solve(A, N);
-	
 	printf("%i\n", result);
 	free(A);
 }
