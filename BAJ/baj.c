@@ -1,65 +1,89 @@
 #include <stdio.h>
 #include <stdlib.h>
+typedef struct state {
+	short max_lvl;
+	short spent;
+	struct state *next;
+} state;
+
+state *add(state *head, short max_lvl, short spent){
+	state *s = (state *)malloc(sizeof(state));
+	s->max_lvl = max_lvl;
+	s->spent = spent;
+	s->next = head;
+	return s;
+}
+
+void free_state(state *s){
+	state * next;
+	while (s != NULL){
+		next = s->next;
+		free(s);
+		s = next;
+	}
+}
 
 int main(){
+	state *head = NULL;
 	int N;
 	int M;
 	scanf("%i %i", &N, &M);
-	int * A = malloc(sizeof(int) * N);
 	int i = 0;
-	for (i = 0; i < N; i++){
+	int A[N];
+	for (i = 0; i < N; i++)
 		scanf("%i", &(A[i]));
-	}
-	int maxLevel = A[N-1];
-	int * levels = malloc(sizeof(int) * maxLevel + 1);
-	levels[0] = 0;
-	levels[1] = N;
+	int result = 0;
+	int max = A[N-1];
+	short levels[max];
 	int j = 0;
-	for (i = 0; i <= maxLevel; i++){
-		if (A[j] >= i)
-			levels[i] = N-j;
-		if (A[j] == i)
-			for (; A[j] <= i; j++){} 
-	}
-	int ** result = malloc(sizeof(int*) * maxLevel + 1);
-
-	result[0] = 0;
-	result[0] = malloc(sizeof(int) * M + 1);
-	for (i = 0; i < M + 1; i++){
-		result[0][i] = 0;
-	}
-	for (i = 1; i <= maxLevel; i++){
-		int tmp = (i - j) * levels[i];
-		result[i] = malloc(sizeof(int) * M + 1);
-		int m = 0;
-		result[i][0] = 0;
-		for (m = 1; m <= M; M++){
-			result[i][m] = M+1;
-			for (j = 0; j < i; j++){
-				if (tmp + result[j][m] <= m){ 
-					if (result[i][m] <= m)
-						result[i][m] = tmp + result[j][m] < result[i][m] ? result[i][m] : tmp + result[j][m];
-					else
-						result[i][m] = tmp + result[j][m];
-				}
-			}
+	for (i = 0; i < max; i++){
+		if (i + 1 <= A[j]){
+			levels[i] = N - j;
+		}
+		else {
+			while (A[j] < i + 1)
+				j++;
+			i--;
 		}
 	}
-	//to samo tylko dla kazdego M trzeba zrobic od 0 do M
-	int res = 0;
-	for (i = 0; i <= maxLevel; i++)
-		if (result[i] <= M)
-			res = res > result[i] ? res : result[i];
-
-	/*for (i = 0; i <= maxLevel; i++)
-		printf("%i ", levels[i]);
-	printf("\n");
-	for (i = 0; i <= maxLevel; i++)
-		printf("%i ", result[i]);
-	printf("\n");*/
-	printf("%i\n", res);				
-	free(result);
-	free(levels);
-	free(A);
+	head = add(head, 0, 0);
+	short added[M+1][N+1];
+	for (j = 0; j <= M; j++)
+		for (i = 0; i <= N; i++)
+			added[j][i] = max;
+	for (i = max-1; i >= 0; i--){
+		state * current = head;
+		state * newhead = NULL;
+		while (current != NULL){
+			int smaxlvl = current->max_lvl;
+			int spent = current->spent;
+			int tmp = spent + smaxlvl;
+			if (tmp <= M){
+				if (i < added[tmp][smaxlvl]){
+					newhead = add(newhead, smaxlvl, tmp);
+					added[tmp][smaxlvl] = i;
+				}
+			}
+			tmp = spent + levels[i];
+			if (tmp <= M){
+				if (i < added[tmp][levels[i]]){
+					newhead = add(newhead, levels[i], tmp);
+					added[tmp][levels[i]] = i;
+				}
+			}
+			current = current->next;
+		}
+		free_state(head);
+		head = newhead;
+	}
+	state *current = head;
+	while (current != NULL){
+		if ((current->spent > result) && (current->spent <= M))
+			result = current->spent;
+		current = current->next;
+	}
+	
+	printf("%i\n",result);
+	free_state(head);
 	return 0;
 }
