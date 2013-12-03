@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
 #include <vector>
+#include <queue>
 #include <cmath>
 
 using namespace std;
@@ -32,31 +33,55 @@ void calc_depth(node * tree, int i, int cd)
 
 void set_ancestors(node * tree, int i, int anc)
 {
-	if (i == -1)
-		return;
-	if (tree[i].depth == 0){
-		tree[i].ancestors.push_back(i);
-	}
-	else {
-		tree[i].ancestors.push_back(anc);
-		while (tree[anc].ancestors.size() >= tree[i].ancestors.size()){
-			int tmp = tree[anc].ancestors[tree[i].ancestors.size()-1];
-			tree[i].ancestors.push_back(tmp);
-			anc = tmp;
+
+	queue<int> q;
+	q.push(i);
+	while(!q.empty()){
+		i = q.front();
+		q.pop();
+		printf("%i\n", i);
+		if (i != -1)
+		{
+			if (tree[i].depth == 0){
+				tree[i].ancestors.push_back(i);
+			}
+			else {
+				anc = tree[i].ancestors[0];//tree[i].ancestors.push_back(anc);
+				while ((int)log2(tree[i].depth) >= tree[i].ancestors.size()){
+					int tmp = tree[anc].ancestors[tree[i].ancestors.size()-1];
+					tree[i].ancestors.push_back(tmp);
+					anc = tmp;
+				}
+			}
+			if (tree[i].left_i != -1)
+				tree[tree[i].left_i].ancestors.push_back(i);
+			if (tree[i].right_i != -1)
+				tree[tree[i].right_i].ancestors.push_back(i);
+			q.push(tree[i].left_i);
+			q.push(tree[i].right_i);
 		}
 	}
-	printf("node %i ancnum %i\n", i, tree[i].ancestors.size());
-	set_ancestors(tree, tree[i].left_i, i);
-	set_ancestors(tree, tree[i].right_i, i);
 }
 
 int find_k_ancestor(node * tree, int i, int k)
 {
-	if (k == 0)
+	int mask = 1;
+	if (k > tree[i].depth)
+		return -1;
+
+	for (int l = 0; l < (int)log2(k)+1; l++){
+		printf("mask %i mask&k %i from %i ", mask, k&mask, i);
+		if ((k & mask) != 0)
+			i = tree[i].ancestors[l];
+		printf(" to %i\n", i);
+		mask = mask << 1;
+	}
+	return i;
+	/*if (k == 0)
 		return i;
-	int ni = tree[i].ancestors[(int)log2(k)];
+	int ni = tree[i].ancestors[(int)log2(k)]; //HAHA DUPA
 	int nk = k + tree[ni].depth - tree[i].depth;
-	return find_k_ancestor(tree, ni, nk);
+	return find_k_ancestor(tree, ni, nk);*/
 }
 int find_lca_rec(node * tree, int a, int b)
 {
@@ -240,13 +265,15 @@ int main()
 		scanf("%i %i %i %i", &a, &b, &da, &db);
 		printf("%i\n", find_node(tree, a, b, da, db));
 	}
-	/*for (int i = 1; i <= N; i++) {
+	for (int i = 1; i <= N; i++) {
 		printf("node: %i, depth: %i anc: %i depth_i: %i\n", i, tree[i].depth, tree[i].ancestors.size(), tree[i].max_depth_i);
 		for (int j: tree[i].ancestors){
 			printf("%i ", j);
 		}
 		printf("\n");
-	}*/
+	}
+	printf("%i\n", find_k_ancestor(tree, 9, 1));
+	printf("%i\n", find_k_ancestor(tree, 100, 100));
 	//printf("%i\n", find_k_ancestor(tree, 9, 1));
 	//printf("%i\n", find_lca(tree, 9, 2));
 	//printf("%i\n", dfs(tree, 9, 4));
