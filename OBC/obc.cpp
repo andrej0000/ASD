@@ -1,4 +1,5 @@
 #include <vector>
+#include <cstdlib>
 #include <cstdio>
 #include <map>
 #include <set>
@@ -9,43 +10,56 @@ using std::map;
 using std::vector;
 using std::set;
 
-typedef struct {
+struct Route{
 	int from;
 	int to;
 	unsigned long long weight;
-} route;
+};
 
-typedef struct {
+struct Node{
 	set<int> neighbours;
 	int unvisited;
-	vector<route*> routes;
+	vector<Route*> routes;
 	unsigned long long weight;
-} node;
+};
 int main()
 {
 	int N;
 	int M;
+	unsigned long long max_score = 0;
 	scanf("%i %i", &N, &M);
-	node vertex[N];
+	Node vertex[N];
 	for (int i = 0; i < N; i++){
 		vertex[i].unvisited = 0;
 		vertex[i].weight = 0;
 	}
 	for (int i = 0; i < N-1; i++){
-		int f;
-		int t;
+		int f = 0;
+		int t = 0;
 		scanf("%i %i", &f, &t);
+		if (t >= N || t < 0 || f >= N || f < 0){
+			printf("-2");
+			return 0;
+		}
 		vertex[f].unvisited++;
 		vertex[t].unvisited++;
 		vertex[f].neighbours.insert(t);
 		vertex[t].neighbours.insert(f);
 	}
 	for (int i = 0; i < M; i++){
-		int f;
-		int t;
-		unsigned long long w;
-		scanf("%i %i %u", &f, &t, &w);
-		route * r = new route;
+		int f = 0;
+		int t = 0;
+		unsigned long long w=0;
+		scanf("%i %i %llu", &f, &t, &w);
+		if (t >= N || t < 0 || f >= N || f < 0){
+			printf("-3");
+			return 0;
+		}
+		Route * r = new Route;
+		if (r == NULL){
+			printf("-4");
+			return 0;
+		}
 		r->weight = w;
 		r->from = f;
 		r->to = t;
@@ -54,49 +68,66 @@ int main()
 		vertex[f].weight += w;
 		vertex[t].weight += w;
 	}
-	/*
-		printf("%i unvisited: %i\n", i, vertex[i].unvisited);
-		for (int j : vertex[i].neighbours)
-			printf("%i ", j);
-		printf("\n");
-	}*/
 	queue<int> leafs;
-	unsigned long long max_score = 0;
 	for (int i = 0; i < N; i++){
 		if (vertex[i].unvisited == 1)
 			leafs.push(i);
 	}
-	/*
-	 * usuwamy z mapy wszyskie klucze dest
-	 */
+
 	while (!leafs.empty()){
 		int v = leafs.front();
 		leafs.pop();
-		int father = *(vertex[v].neighbours.begin());
-		//printf("wezel %i, z ojcem %i, unv %i\n", v, father, vertex[v].unvisited);
-		vertex[father].unvisited--;
-		vertex[father].neighbours.erase(v);
-		if (vertex[father].unvisited == 1)
-			leafs.push(father);
-		for (route *r : vertex[v].routes){
+		if (v < 0 || v>= N){
+			printf("-9");
+			return 0;
+		}
+		int father = -1;
+		if (vertex[v].unvisited != 0){
+			if (vertex[v].neighbours.size() == 0){
+				printf("-10");
+				return 0;
+			}
+			father = *(vertex[v].neighbours.begin());
+			if (father >= N || father < 0){
+				printf("-5");
+				return 0;
+			}
+			vertex[father].unvisited--;
+			if(vertex[father].neighbours.find(v) != vertex[father].neighbours.end())
+				vertex[father].neighbours.erase(v);
+			if (vertex[father].unvisited == 1)
+				leafs.push(father);
+		}
+		for (Route *r : vertex[v].routes){
+			if (r == NULL){
+				printf("-4");
+				return 0;
+			}
 			if (r->from == r->to){
 				vertex[v].weight -= r->weight;
-				//delete(r);
 			}
 			else {
-				if (r->from == v)
-					r->from = father;
-				else if (r->to == v)
-					r->to = father;
-				else
-					assert(false);
-				vertex[father].routes.push_back(r);
-				vertex[father].weight += r->weight;
+				if (vertex[v].unvisited != 0){
+					if (r->from == v)
+						r->from = father;
+					else if (r->to == v)
+						r->to = father;
+					else {
+						printf("-6");
+						return 0;
+					}
+					if (father >= N || father < 0){
+						printf("-7");
+						return 0;
+					}
+					vertex[father].routes.push_back(r);
+					vertex[father].weight += r->weight;
+				}
 			}
 		}
-		//printf("o wadze %i\n", vertex[v].weight);
-		if (vertex[v].weight > max_score)
+		if (vertex[v].weight > max_score){
 			max_score = vertex[v].weight;
+		}
 	}
-	printf("%u\n", max_score);
+	printf("%llu\n", max_score);
 }
