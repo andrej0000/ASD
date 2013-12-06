@@ -10,124 +10,141 @@ using std::map;
 using std::vector;
 using std::set;
 
+struct Node;
+
 struct Route{
-	int from;
-	int to;
+	Node *from;
+	Node *to;
+	Node *lca;
 	unsigned long long weight;
 };
 
 struct Node{
-	set<int> neighbours;
+	int id;
+	set<Node *> neighbours;
 	int unvisited;
 	vector<Route*> routes;
-	unsigned long long weight;
+	unsigned long long start_weight;
+	unsigned long long end_weight;
+	int rank;
+	Node* highest;
+	Node* anc;
+	bool black;
 };
+
+Node* find(Node * n)
+{
+	if (n == n->highest){
+		return n;
+	}
+	else {
+		n->highest = find(n->highest);
+		return n->highest;
+	}
+}
+
+void make_set(Node * n){
+	n->rank = 0;
+	n->highest = n;
+}
+void union_set(Node * a, Node * b)
+{
+	Node *aR = find(a);
+	Node *bR = find(b);
+	if (aR->rank > bR->rank){
+		bR->highest = aR;
+	} else if (aR->rank < bR->rank){
+		aR->highest = bR;
+	} else {
+		bR->highest = aR;
+		aR->rank++;
+	}
+}
+void count_lca(Node * n)
+{
+//	printf("count lca %i\n", n->id);
+	make_set(n);
+	n->anc = n;
+	for (Node * c : n->neighbours){
+		c->neighbours.erase(n);
+		count_lca(c);
+		union_set(c, n);
+		find(n)->anc = n;
+	}
+	n->black = true;
+	for (Route * r : n->routes){
+		Node * dest;
+		if (r->from == n)
+			dest = r->to;
+		else if (r->to == n)
+			dest = r->from;
+		else
+			assert(false);
+		if (dest->black){
+			r->lca = find(dest)->anc;
+			r->lca->end_weight += r->weight * 2;
+			r->to->start_weight += r->weight;
+			r->from->start_weight += r->weight;
+			delete r;
+		//	printf("calculated lca %i %i : %i\n", r->from->id, r->to->id, r->lca->id);
+		}
+	}
+}
+unsigned long long count_val(Node *n, unsigned long long &max)
+{
+	unsigned long long v = 0;
+	for (Node * c: n->neighbours){
+		v += count_val(c, max);
+	}
+	v += n->start_weight;
+	v -= n->end_weight;
+	//printf("Weight from %i : %i\n", n->id, v);
+	if (max < v)
+		max = v;
+	return v;
+}
 int main()
 {
 	int N;
 	int M;
 	unsigned long long max_score = 0;
 	scanf("%i %i", &N, &M);
-	Node vertex[N];
+	Node* vertex[N];
+
 	for (int i = 0; i < N; i++){
-		vertex[i].unvisited = 0;
-		vertex[i].weight = 0;
+		vertex[i] = new Node;
+		vertex[i]->id = i;
+		vertex[i]->routes.shrink_to_fit();
+		vertex[i]->unvisited = 0;
+		vertex[i]->start_weight = 0;
+		vertex[i]->end_weight = 0;
+		vertex[i]->black = false;
+
 	}
 	for (int i = 0; i < N-1; i++){
 		int f = 0;
 		int t = 0;
 		scanf("%i %i", &f, &t);
-		if (t >= N || t < 0 || f >= N || f < 0){
-			printf("-2");
-			return 0;
-		}
-		vertex[f].unvisited++;
-		vertex[t].unvisited++;
-		vertex[f].neighbours.insert(t);
-		vertex[t].neighbours.insert(f);
+		vertex[f]->unvisited++;
+		vertex[t]->unvisited++;
+		vertex[f]->neighbours.insert(vertex[t]);
+		vertex[t]->neighbours.insert(vertex[f]);
 	}
 	for (int i = 0; i < M; i++){
 		int f = 0;
 		int t = 0;
 		unsigned long long w=0;
 		scanf("%i %i %llu", &f, &t, &w);
-		if (t >= N || t < 0 || f >= N || f < 0){
-			printf("-3");
-			return 0;
-		}
 		Route * r = new Route;
-		if (r == NULL){
-			printf("-4");
-			return 0;
-		}
 		r->weight = w;
-		r->from = f;
-		r->to = t;
-		vertex[f].routes.push_back(r);
-		vertex[t].routes.push_back(r);
-		vertex[f].weight += w;
-		vertex[t].weight += w;
+		r->from = vertex[f];
+		r->to = vertex[t];
+		vertex[f]->routes.push_back(r);
+		vertex[t]->routes.push_back(r);
 	}
-	queue<int> leafs;
-	for (int i = 0; i < N; i++){
-		if (vertex[i].unvisited == 1)
-			leafs.push(i);
-	}
+	count_lca(vertex[0]);
+	unsigned long long max = 0;
+	count_val(vertex[0], max);
 
-	while (!leafs.empty()){
-		int v = leafs.front();
-		leafs.pop();
-		if (v < 0 || v>= N){
-			printf("-9");
-			return 0;
-		}
-		int father = -1;
-		if (vertex[v].unvisited != 0){
-			if (vertex[v].neighbours.size() == 0){
-				printf("-10");
-				return 0;
-			}
-			father = *(vertex[v].neighbours.begin());
-			if (father >= N || father < 0){
-				printf("-5");
-				return 0;
-			}
-			vertex[father].unvisited--;
-			if(vertex[father].neighbours.find(v) != vertex[father].neighbours.end())
-				vertex[father].neighbours.erase(v);
-			if (vertex[father].unvisited == 1)
-				leafs.push(father);
-		}
-		for (Route *r : vertex[v].routes){
-			if (r == NULL){
-				printf("-4");
-				return 0;
-			}
-			if (r->from == r->to){
-				vertex[v].weight -= r->weight;
-			}
-			else {
-				if (vertex[v].unvisited != 0){
-					if (r->from == v)
-						r->from = father;
-					else if (r->to == v)
-						r->to = father;
-					else {
-						printf("-6");
-						return 0;
-					}
-					if (father >= N || father < 0){
-						printf("-7");
-						return 0;
-					}
-					vertex[father].routes.push_back(r);
-					vertex[father].weight += r->weight;
-				}
-			}
-		}
-		if (vertex[v].weight > max_score){
-			max_score = vertex[v].weight;
-		}
-	}
-	printf("%llu\n", max_score);
+	printf("%llu\n", max);
 }
