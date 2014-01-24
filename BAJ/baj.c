@@ -82,7 +82,7 @@ int main(){
 			result = current->spent;
 		current = current->next;
 	}
-	
+
 	printf("%i\n",result);
 	free_state(head);
 	return 0;
